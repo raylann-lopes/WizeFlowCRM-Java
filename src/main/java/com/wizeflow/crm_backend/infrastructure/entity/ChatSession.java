@@ -1,5 +1,6 @@
 package com.wizeflow.crm_backend.infrastructure.entity;
 
+import com.wizeflow.crm_backend.enums.ChatSessionChannel;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -35,12 +36,10 @@ public class ChatSession {
     @JoinColumn(name = "client_id")
     private Client client;
 
-    @Builder.Default
+    @Enumerated(EnumType.STRING)
     @Column(name = "channel")
-    private String channel = "whatsapp";
-
-    @Column(name = "session_id")
-    private String sessionId;
+    @Builder.Default
+    private ChatSessionChannel chatSessionChannel = ChatSessionChannel.WHATSAPP;
 
     @CreationTimestamp
     @Column(name = "created_at", columnDefinition = "TIMESTAMP WITH TIME ZONE")
