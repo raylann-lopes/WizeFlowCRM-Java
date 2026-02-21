@@ -17,7 +17,7 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "appointments", indexes = {
         @Index(name = "idx_appointments_companies_id", columnList = "companies_id"),
-        @Index(name = "idx_appointments_companies_date_id", columnList = "companies_id, start_time"),
+        @Index(name = "idx_appointments_companies_date", columnList = "companies_id, start_time"),
         @Index(name = "idx_appointments_session_id", columnList = "session_id"),
 
 
