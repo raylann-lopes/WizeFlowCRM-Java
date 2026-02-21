@@ -1,13 +1,13 @@
-package com.wizeflow.crm_backend;
+package com.wizeflow.crm;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class CrmBackendApplication {
+public class WizeFlowCrmApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(CrmBackendApplication.class, args);
+		SpringApplication.run(WizeFlowCrmApplication.class, args);
 	}
 
 }
