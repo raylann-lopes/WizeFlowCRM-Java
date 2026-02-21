@@ -14,9 +14,9 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @Entity
 @Table (name = "tickets", indexes = {
-        @Index(name = "idx_ticket_companies_id", columnList = "companies_id"),
-        @Index(name = "idx_ticket_user_id", columnList = "user_id"),
-        @Index(name = "idx_ticket_companies_status_id", columnList = "companies_id, status")
+        @Index(name = "idx_tickets_companies_id", columnList = "companies_id"),
+        @Index(name = "idx_tickets_user_id", columnList = "user_id"),
+        @Index(name = "idx_tickets_companies_status", columnList = "companies_id, status")
 })
 
 public class Ticket {

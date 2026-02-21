@@ -37,7 +37,7 @@ public class User {
     @Column(name = "email", nullable = false)
     private String email;
 
-    @Column(name = "password", nullable = false)
+    @Column(name = "password")
     private String password;
 
     @Enumerated(EnumType.STRING)
@@ -65,7 +65,7 @@ public class User {
     private OffsetDateTime updatedAt;
 
     @Column(name = "session_id")
-    private String sessionID;
+    private String sessionId;
 
     @Column(name = "department")
     private String department;
