@@ -1,6 +1,6 @@
-package com.wizeflow.crm_backend.controller;
+package com.wizeflow.crm.backend.controller;
 
-import com.wizeflow.crm_backend.services.CompanyService;
+import com.wizeflow.crm.backend.services.CompanyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

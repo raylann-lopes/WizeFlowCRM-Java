@@ -1,4 +1,4 @@
-package com.wizeflow.crm_backend.enums;
+package com.wizeflow.crm.backend.enums;
 
 import lombok.Getter;
 

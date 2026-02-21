@@ -1,6 +1,6 @@
-package com.wizeflow.crm_backend.infrastructure.repository;
+package com.wizeflow.crm.backend.infrastructure.repository;
 
-import com.wizeflow.crm_backend.infrastructure.entity.User;
+import com.wizeflow.crm.backend.infrastructure.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 

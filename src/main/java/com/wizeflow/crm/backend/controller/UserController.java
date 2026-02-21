@@ -1,7 +1,7 @@
-package com.wizeflow.crm_backend.controller;
+package com.wizeflow.crm.backend.controller;
 
-import com.wizeflow.crm_backend.infrastructure.entity.User;
-import com.wizeflow.crm_backend.services.UserService;
+import com.wizeflow.crm.backend.infrastructure.entity.User;
+import com.wizeflow.crm.backend.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

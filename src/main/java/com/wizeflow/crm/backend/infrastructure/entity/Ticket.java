@@ -1,4 +1,4 @@
-package com.wizeflow.crm_backend.infrastructure.entity;
+package com.wizeflow.crm.backend.infrastructure.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

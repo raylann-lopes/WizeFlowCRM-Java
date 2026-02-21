@@ -1,7 +1,7 @@
-package com.wizeflow.crm_backend.services;
+package com.wizeflow.crm.backend.services;
 
-import com.wizeflow.crm_backend.infrastructure.entity.Company;
-import com.wizeflow.crm_backend.infrastructure.repository.CompanyRepository;
+import com.wizeflow.crm.backend.infrastructure.entity.Company;
+import com.wizeflow.crm.backend.infrastructure.repository.CompanyRepository;
 import org.springframework.stereotype.Service;
 
 @Service

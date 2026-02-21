@@ -1,6 +1,6 @@
-package com.wizeflow.crm_backend.infrastructure.entity;
+package com.wizeflow.crm.backend.infrastructure.entity;
 
-import com.wizeflow.crm_backend.enums.Role;
+import com.wizeflow.crm.backend.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
