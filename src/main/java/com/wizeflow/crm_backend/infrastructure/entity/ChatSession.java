@@ -17,8 +17,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "chat_session", indexes = {
-        @Index(name = "idx_chat_session_company_id", columnList = "company_id"),
+@Table(name = "chat_sessions", indexes = {
+        @Index(name = "idx_chat_session_companies_id", columnList = "companies_id"),
         @Index(name = "idx_chat_session_client_id", columnList = "client_id"),
 })
 @Entity
@@ -28,7 +28,7 @@ public class ChatSession {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id", nullable = false)
+    @JoinColumn(name = "companies_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Company company;
 
@@ -49,11 +49,13 @@ public class ChatSession {
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime updatedAt;
 
-    @OneToMany(mappedBy = "chatSession")
+    @Builder.Default
+    @OneToMany(mappedBy = "chatSession", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Lead> leads = new ArrayList<>();
 
-    @OneToMany(mappedBy = "chatSession")
+    @Builder.Default
+    @OneToMany(mappedBy = "chatSession", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Appointment> appointments = new ArrayList<>();
 
-
 }
+

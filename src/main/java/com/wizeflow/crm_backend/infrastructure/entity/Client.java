@@ -3,6 +3,7 @@ package com.wizeflow.crm_backend.infrastructure.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -14,20 +15,20 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Table(name = "clients", indexes = {
-        @Index(name = "idx_client_company_id", columnList = "company_id"),
-        @Index(name = "idx_client_company_status", columnList = "company_id, status"),
+        @Index(name = "idx_client_companies_id", columnList = "companies_id"),
+        @Index(name = "idx_client_companies_status", columnList = "companies_id, status"),
         @Index(name = "idx_client_session_id", columnList = "session_id")
 })
 
 @Entity
 public class Client {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "company_id", nullable = false)
-    private Company companyRelation;
+    @JoinColumn(name = "companies_id", nullable = false)
+    private Company company;
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -54,6 +55,13 @@ public class Client {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
+
+    @Column(name = "last_interaction")
+    private OffsetDateTime lastInteraction;
 
     @Builder.Default
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, orphanRemoval = true)

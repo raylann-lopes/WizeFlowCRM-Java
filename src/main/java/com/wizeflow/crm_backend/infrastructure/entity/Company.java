@@ -17,12 +17,11 @@ import java.util.Map;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "company", indexes = {
-        @Index(name = "idx_company_id", columnList = "id"),
-        @Index(name = "idx_company_slug", columnList = "slug"),
-        @Index(name = "idx_company_status", columnList = "status"),
-        @Index(name = "idx_company_plan", columnList = "plan"),
-        @Index(name = "idx_company_session_id", columnList = "session_id")
+@Table(name = "companies", indexes = {
+        @Index(name = "idx_companies_id", columnList = "id"),
+        @Index(name = "idx_companies_slug", columnList = "slug"),
+        @Index(name = "idx_companies_status", columnList = "status"),
+        @Index(name = "idx_companies_plan", columnList = "plan"),
 })
 @Entity
 public class Company {
@@ -41,12 +40,14 @@ public class Company {
     private String phone;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb") // Use "json" se for MySQL, "jsonb" para Postgres
+    @Column(columnDefinition = "jsonb")
     private Map<String, Object> settings;
 
+    @Builder.Default
     @Column(name = "plan", length = 50)
     private String plan = "free";
 
+    @Builder.Default
     @Column(name = "status")
     private String status = "active";
 
@@ -58,22 +59,25 @@ public class Company {
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
+    @Builder.Default
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Appointment> appointments = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Client> clients = new ArrayList<>();
 
-    @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<History> histories = new ArrayList<>();
-
+    @Builder.Default
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Lead> leads = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Ticket> tickets = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "company", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<User> users = new ArrayList<>();
 
 }
+

@@ -3,9 +3,12 @@ package com.wizeflow.crm_backend.infrastructure.entity;
 import com.wizeflow.crm_backend.enums.Source;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 @Getter
@@ -13,11 +16,16 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table(name = "lead")
+@Table(name = "leads", indexes = {
+        @Index(name = "idx_leads_companies_id", columnList = "companies_id"),
+        @Index(name = "idx_leads_client_id", columnList = "client_id"),
+        @Index(name = "idx_leads_companies_status", columnList = "companies_id, status"),
+        @Index(name = "idx_leads_session_id", columnList = "session_id")
+})
 @Entity
 public class Lead {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -25,7 +33,7 @@ public class Lead {
     private Client client;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id", nullable = false)
+    @JoinColumn(name = "companies_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Company company;
 
@@ -35,17 +43,17 @@ public class Lead {
 
     @Column(name = "business_name")
     @Setter(AccessLevel.NONE)
-    private String bussinesName;
+    private String businessName;
 
     @Builder.Default
     @Column(name = "status")
     private String status = "Novo";
 
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "value")
-    private Float value;
+    @Column(name = "value", precision = 15, scale = 2)
+    private BigDecimal value;
 
     @Builder.Default
     @Column(name = "is_hot")
@@ -67,12 +75,17 @@ public class Lead {
     @Column(name = "industry")
     private String industry;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @Column(name = "source")
     private Source source;
 
-    @Column(name = "createdAt", updatable = false)
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private OffsetDateTime updatedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "session_id")
@@ -83,10 +96,11 @@ public class Lead {
     private void preencherDadosDoCliente() {
         if (client != null) {
             name = client.getName();
-            bussinesName = client.getBusinessName();
+            businessName = client.getBusinessName();
             email = client.getEmail();
             phone = client.getPhone();
-            company = client.getCompanyRelation();
+            company = client.getCompany();
         }
     }
 }
+
