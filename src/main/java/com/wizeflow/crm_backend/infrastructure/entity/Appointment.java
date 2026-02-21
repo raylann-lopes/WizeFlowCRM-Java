@@ -8,7 +8,6 @@ import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 @Getter
@@ -16,7 +15,13 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "appointment")
+@Table(name = "appointments", indexes = {
+        @Index(name = "idx_appointments_companies_id", columnList = "companies_id"),
+        @Index(name = "idx_appointments_companies_date_id", columnList = "companies_id, start_time"),
+        @Index(name = "idx_appointments_session_id", columnList = "session_id"),
+
+
+})
 @Builder
 public class Appointment {
 
@@ -25,12 +30,12 @@ public class Appointment {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id", nullable = false)
+    @JoinColumn(name = "companies_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Company company;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cliente_id")
+    @JoinColumn(name = "client_id")
     private Client client;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,13 +48,14 @@ public class Appointment {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "start_time", nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private LocalDateTime startTime;
+    @Column(name = "start_time", nullable = false)
+    private OffsetDateTime startTime;
 
-    @Column(name = "end_time", nullable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
-    private LocalDateTime endTime;
+    @Column(name = "end_time", nullable = false)
+    private OffsetDateTime endTime;
 
-    @Enumerated
+    @Enumerated (EnumType.STRING)
+    @Builder.Default
     @Column(name = "appointment_status")
     private AppointmentStatus appointmentStatus = AppointmentStatus.SCHEDULE;
 
@@ -58,11 +64,11 @@ public class Appointment {
     private ChatSession chatSession;
 
     @CreationTimestamp
-    @Column(name = "createdAt")
+    @Column(name = "created_at")
     private OffsetDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updatedAt")
+    @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
 
     @PrePersist

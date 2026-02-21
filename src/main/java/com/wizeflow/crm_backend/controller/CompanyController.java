@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/company")
+@RequestMapping("/companies")
 public class CompanyController {
     private final CompanyService companyService;
 
@@ -18,3 +18,4 @@ public class CompanyController {
 
     }
 }
+

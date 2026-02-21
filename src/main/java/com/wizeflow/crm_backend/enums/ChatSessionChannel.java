@@ -4,5 +4,5 @@ public enum ChatSessionChannel {
     WHATSAPP,
     INSTAGRAM,
     FACEBOOK,
-    LIGACACAO;
+    LIGACAO;
 }

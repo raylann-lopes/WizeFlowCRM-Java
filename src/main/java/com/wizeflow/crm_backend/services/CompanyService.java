@@ -5,7 +5,6 @@ import com.wizeflow.crm_backend.infrastructure.repository.CompanyRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-
 public class CompanyService {
     private final CompanyRepository repository;
 
@@ -13,28 +12,28 @@ public class CompanyService {
         this.repository = repository;
     }
 
-    public void SaveCompany(Company company) {
+    public void saveCompany(Company company) {
         repository.saveAndFlush(company);
     }
 
-    public Company searchCompanyById(Long id) {
-        return repository.searchCompanyById(id);
+    public Company findCompanyById(Long id) {
+        return repository.findById(id).orElseThrow(
+                () -> new RuntimeException("Empresa nao encontrada")
+        );
     }
 
-    public Company searchCompanyBySlug(String slug) {
-        return repository.searchCompanyBySlug(slug).orElseThrow(
+    public Company findCompanyBySlug(String slug) {
+        return repository.findBySlug(slug).orElseThrow(
                 () -> new RuntimeException("Empresa nao encontrada")
         );
     }
 
     public void deleteCompanyBySlug(String slug) {
-        repository.deleteCompanyBySlug(slug).orElseThrow(
-                () -> new RuntimeException("Empresa inexistente")
-        );
+        repository.deleteBySlug(slug);
     }
 
     public Company updateCompanyBySlug(String slug, Company company) {
-        Company companyEntity = searchCompanyBySlug(slug);
+        Company companyEntity = findCompanyBySlug(slug);
         Company companyUpdate = Company.builder()
                 .id(companyEntity.getId())
                 .slug(slug)
@@ -48,8 +47,8 @@ public class CompanyService {
                 .users(companyEntity.getUsers())
                 .clients(companyEntity.getClients())
                 .build();
-        SaveCompany(companyUpdate);
+        saveCompany(companyUpdate);
         return companyUpdate;
-
     }
 }
+
