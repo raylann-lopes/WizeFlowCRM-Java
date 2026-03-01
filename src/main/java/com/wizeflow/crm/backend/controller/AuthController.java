@@ -210,21 +210,4 @@ public class AuthController {
                         .build())
                 .build();
     }
-    private static final class Tokens {
-        private final String accessToken;
-        private final String refreshToken;
-
-        private Tokens(String accessToken, String refreshToken) {
-            this.accessToken = accessToken;
-            this.refreshToken = refreshToken;
-        }
-
-        private String accessToken() {
-            return accessToken;
-        }
-
-        private String refreshToken() {
-            return refreshToken;
-        }
-    }
-}
+    private record Tokens(String accessToken, String refreshToken) {}
