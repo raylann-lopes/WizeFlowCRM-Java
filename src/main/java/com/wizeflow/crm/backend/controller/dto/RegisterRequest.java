@@ -1,6 +1,5 @@
 package com.wizeflow.crm.backend.controller.dto;
 
-import com.wizeflow.crm.backend.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -26,9 +25,6 @@ public class RegisterRequest {
     @NotBlank(message = "Senha é obrigatória")
     @Size(min = 8, message = "Senha deve ter no mínimo 8 caracteres")
     private String password;
-
-    @NotNull(message = "Role é obrigatória")
-    private Role role;
 
     @NotNull(message = "ID da empresa é obrigatório")
     private Long companyId;

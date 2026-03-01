@@ -1,6 +1,7 @@
 package com.wizeflow.crm.backend.infrastructure.entity;
 
 import com.wizeflow.crm.backend.enums.Role;
+import com.wizeflow.crm.backend.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -44,8 +45,9 @@ public class User {
     @Column(name = "role", nullable = false)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private String status;
+    private UserStatus status;
 
     @Column(name = "cpf", unique = true)
     private String cpf;

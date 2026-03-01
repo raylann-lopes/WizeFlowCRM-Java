@@ -10,6 +10,8 @@ import com.wizeflow.crm.backend.infrastructure.repository.CompanyRepository;
 import com.wizeflow.crm.backend.infrastructure.repository.UserRepository;
 import com.wizeflow.crm.backend.security.config.JwtProperties;
 import com.wizeflow.crm.backend.security.service.JwtUtil;
+import com.wizeflow.crm.backend.enums.Role;
+import com.wizeflow.crm.backend.enums.UserStatus;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -96,13 +98,15 @@ public class AuthController {
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(request.getRole())
+                // Force default role to USER to prevent privilege escalation via client-supplied role
+                .role(Role.USER)
                 .company(company)
                 .phone(request.getPhone())
                 .cpf(request.getCpf())
                 .jobTitle(request.getJobTitle())
                 .department(request.getDepartment())
-                .status("ACTIVE")
+                // Use enum for status instead of magic string
+                .status(UserStatus.ACTIVE)
                 .build();
 
         user = userRepository.save(user);
