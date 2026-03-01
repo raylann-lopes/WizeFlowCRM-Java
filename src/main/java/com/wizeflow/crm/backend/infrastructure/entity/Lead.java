@@ -52,7 +52,7 @@ public class Lead {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "value", precision = 15, scale = 2)
+    @Column(name = "lead_value", precision = 15, scale = 2)
     private BigDecimal value;
 
     @Builder.Default
@@ -103,4 +103,3 @@ public class Lead {
         }
     }
 }
-

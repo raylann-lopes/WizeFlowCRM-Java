@@ -26,7 +26,7 @@ public class N8nChatHistories {
     private String sessionId;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column
     private Map<String, Object> message;
 
 }

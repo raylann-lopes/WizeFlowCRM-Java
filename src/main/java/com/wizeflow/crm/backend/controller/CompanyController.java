@@ -1,5 +1,6 @@
 package com.wizeflow.crm.backend.controller;
 
+import com.wizeflow.crm.backend.infrastructure.entity.Company;
 import com.wizeflow.crm.backend.services.CompanyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,8 +15,7 @@ public class CompanyController {
     private final CompanyService companyService;
 
     @PostMapping
-    public void findCompanyById(@RequestBody CompanyService companyService) {
-
+    public void createCompany(@RequestBody Company company) {
+        companyService.saveCompany(company);
     }
 }
-

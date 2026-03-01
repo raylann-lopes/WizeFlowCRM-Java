@@ -35,5 +35,6 @@ build/
 .gemini/
 gha-creds-*.json
 .github
+.ai
 AGENTS.md
 

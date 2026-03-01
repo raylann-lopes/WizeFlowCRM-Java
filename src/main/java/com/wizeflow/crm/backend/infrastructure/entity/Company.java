@@ -40,7 +40,7 @@ public class Company {
     private String phone;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
+    @Column
     private Map<String, Object> settings;
 
     @Builder.Default
@@ -80,4 +80,3 @@ public class Company {
     private List<User> users = new ArrayList<>();
 
 }
-
