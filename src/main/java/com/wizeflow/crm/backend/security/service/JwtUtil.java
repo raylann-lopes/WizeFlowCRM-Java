@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +32,7 @@ public class JwtUtil {
         Map<String, Object> claims = new HashMap<>();
 
         claims.put("authorities", userDetails.getAuthorities());
-
+        claims.put("typ", "access");
 
         return createToken(claims, userDetails.getUsername(), jwtProperties.getExpiration());
     }
@@ -39,8 +40,10 @@ public class JwtUtil {
 
     public String generateRefreshToken(UserDetails userDetails) {
 
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("typ", "refresh");
 
-        return createToken(new HashMap<>(), userDetails.getUsername(), jwtProperties.getRefreshExpiration());
+        return createToken(claims, userDetails.getUsername(), jwtProperties.getRefreshExpiration());
     }
 
 
@@ -106,7 +109,6 @@ public class JwtUtil {
 
 
 
-
             if (username == null || userDetails == null) {
                 return false;
             }
@@ -132,11 +134,29 @@ public class JwtUtil {
 
     private SecretKey getSigningKey() {
         String secret = jwtProperties.getSecret();
-        if (secret == null || secret.isBlank()) {
-            throw new IllegalStateException("JWT secret não configurado");
+        if (secret == null) secret = "";
+
+        byte[] keyBytes = null;
+
+        // Try decode base64 first (common practice to store keys in base64 form)
+        try {
+            byte[] decoded = Base64.getDecoder().decode(secret);
+            // if decoding produces something reasonable, use it
+            if (decoded != null && decoded.length > 0) {
+                keyBytes = decoded;
+            }
+        } catch (IllegalArgumentException ex) {
+            // not base64 - will try raw bytes below
         }
 
-        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes == null) {
+            keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        }
+
+        // Enforce minimum length for HMAC-SHA (recommend >= 32 bytes for HS256)
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("JWT secret is too short. Provide a secret with at least 32 bytes (or a Base64-encoded key of >=32 bytes). Current length: " + keyBytes.length);
+        }
 
         return Keys.hmacShaKeyFor(keyBytes);
     }

@@ -47,7 +47,9 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
 
-        log.info("Login attempt for email: {}", request.getEmail());
+        // Log at DEBUG to avoid leaking PII in production; mask email in logs when INFO needed
+        String maskedEmail = maskEmail(request.getEmail());
+        log.debug("Login attempt for email: {}", maskedEmail);
 
         try {
             Authentication authentication = authenticationManager.authenticate(
@@ -82,19 +84,23 @@ public class AuthController {
             log.info("User {} logged in successfully", userEntity.getEmail());
             return ResponseEntity.ok(response);
 
-        } catch (BadCredentialsException bce) {
-            log.warn("Invalid login attempt for email {}: {}", request.getEmail(), bce.getMessage());
+        } catch (org.springframework.security.core.AuthenticationException ae) {
+            log.warn("Authentication failed for {}: {}", maskedEmail, ae.getMessage());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email ou senha inválidos");
+        } catch (ResponseStatusException rse) {
+            // propagate application-specific responses (e.g., 404)
+            throw rse;
         } catch (Exception e) {
-            log.error("Authentication failed for email {}: {}", request.getEmail(), e.getMessage());
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email ou senha inválidos");
+            log.error("Unexpected error during authentication for {}: {}", maskedEmail, e.toString());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno");
         }
     }
 
 
     @PostMapping("/register")
     public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
-        log.info("Registration attempt for email: {}", request.getEmail());
+        String maskedEmail = maskEmail(request.getEmail());
+        log.debug("Registration attempt for email: {}", maskedEmail);
 
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -119,7 +125,7 @@ public class AuthController {
                 .build();
 
         user = userRepository.save(user);
-        log.info("User {} registered successfully", user.getEmail());
+        log.info("User registered successfully: {}", maskEmail(user.getEmail()));
 
         // Use CustomUserDetails to avoid double load during immediate token generation
         UserDetails userDetails = (UserDetails) userDetailsService.loadUserByUsername(user.getEmail());
@@ -162,9 +168,11 @@ public class AuthController {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token inválido");
             }
 
+        } catch (ResponseStatusException rse) {
+            throw rse;
         } catch (Exception e) {
-            log.error("Token refresh failed: {}", e.getMessage());
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token inválido ou expirado");
+            log.error("Token refresh failed: {}", e.toString());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno");
         }
     }
 
@@ -183,7 +191,7 @@ public class AuthController {
             blocklistService.blockToken(jwt, expiry);
             log.info("Token blocked until {}", expiry);
         } catch (Exception e) {
-            log.warn("Could not block token at logout: {}", e.getMessage());
+            log.warn("Could not block token at logout: {}", e.toString());
         }
 
         return ResponseEntity.noContent().build();
@@ -211,3 +219,12 @@ public class AuthController {
                 .build();
     }
     private record Tokens(String accessToken, String refreshToken) {}
+
+    private String maskEmail(String email) {
+        if (email == null || email.isBlank()) return "<unknown>";
+        int at = email.indexOf('@');
+        if (at <= 1) return "***@" + (at > 1 ? email.substring(at + 1) : "***");
+        String prefix = email.substring(0, Math.min(2, at));
+        return prefix + "***@" + email.substring(at + 1);
+    }
+ }
