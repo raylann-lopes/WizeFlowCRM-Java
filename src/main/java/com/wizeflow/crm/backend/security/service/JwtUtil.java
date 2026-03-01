@@ -83,6 +83,14 @@ public class JwtUtil {
         return claimsResolver.apply(claims);
     }
 
+    public String extractTokenType(String token) {
+        try {
+            return extractClaim(token, claims -> claims.get("typ", String.class));
+        } catch (Exception e) {
+            log.debug("Could not extract token type: {}", e.getMessage());
+            return null;
+        }
+    }
 
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
@@ -90,29 +98,18 @@ public class JwtUtil {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-
     }
 
-
     private Boolean isTokenExpired(String token) {
-
-
         return extractExpiration(token).before(new Date());
     }
 
-
     public Boolean validateToken(String token, UserDetails userDetails) {
         try {
-
             final String username = extractUsername(token);
-
-
-
-
             if (username == null || userDetails == null) {
                 return false;
             }
-
 
             if (!userDetails.isEnabled()
                     || !userDetails.isAccountNonLocked()
@@ -124,8 +121,6 @@ public class JwtUtil {
             return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
 
         } catch (Exception e) {
-
-
             log.error("Token validation failed: {}", e.getMessage());
             return false;
         }

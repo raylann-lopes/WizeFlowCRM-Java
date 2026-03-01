@@ -52,6 +52,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
+            // Reject tokens that are not access tokens (prevent using refresh tokens as Bearer)
+            String typ = jwtUtil.extractTokenType(jwt);
+            if (typ == null || !typ.equalsIgnoreCase("access")) {
+                log.warn("Non-access token used as bearer: typ={}", typ);
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+
             String userEmail = jwtUtil.extractUsername(jwt);
 
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
