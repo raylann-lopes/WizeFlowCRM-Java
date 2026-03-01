@@ -4,20 +4,22 @@ import com.wizeflow.crm.backend.controller.dto.LoginRequest;
 import com.wizeflow.crm.backend.controller.dto.LoginResponse;
 import com.wizeflow.crm.backend.controller.dto.RefreshTokenRequest;
 import com.wizeflow.crm.backend.controller.dto.RegisterRequest;
-import com.wizeflow.crm.backend.infrastructure.entity.Company;
 import com.wizeflow.crm.backend.infrastructure.entity.User;
-import com.wizeflow.crm.backend.infrastructure.repository.CompanyRepository;
 import com.wizeflow.crm.backend.infrastructure.repository.UserRepository;
 import com.wizeflow.crm.backend.security.config.JwtProperties;
+import com.wizeflow.crm.backend.security.service.CustomUserDetails;
 import com.wizeflow.crm.backend.security.service.JwtUtil;
+import com.wizeflow.crm.backend.security.service.TokenBlocklistService;
 import com.wizeflow.crm.backend.enums.Role;
 import com.wizeflow.crm.backend.enums.UserStatus;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +28,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
@@ -33,11 +37,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
-    private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final JwtProperties jwtProperties;
     private final UserDetailsService userDetailsService;
+    private final TokenBlocklistService blocklistService;
 
 
     @PostMapping("/login")
@@ -53,28 +57,36 @@ public class AuthController {
                     )
             );
 
+            // Avoid redundant DB lookup: principal is CustomUserDetails (returned by CustomUserDetailsService)
+            Object principal = authentication.getPrincipal();
+            User userEntity;
+            if (principal instanceof CustomUserDetails) {
+                userEntity = ((CustomUserDetails) principal).getUser();
+            } else {
+                // Fallback: load from repository
+                userEntity = userRepository.findByEmail(request.getEmail())
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
+            }
+
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
             if (userDetails == null) {
                 log.error("Authentication succeeded but principal is null for email {}", request.getEmail());
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email ou senha inválidos");
             }
-            User user = userRepository.findByEmail(userDetails.getUsername())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
-
 
             Tokens tokens = generateTokens(userDetails);
 
+            LoginResponse response = buildLoginResponse(userEntity, tokens);
 
-            LoginResponse response = buildLoginResponse(user, tokens);
-
-            log.info("User {} logged in successfully", user.getEmail());
+            log.info("User {} logged in successfully", userEntity.getEmail());
             return ResponseEntity.ok(response);
 
+        } catch (BadCredentialsException bce) {
+            log.warn("Invalid login attempt for email {}: {}", request.getEmail(), bce.getMessage());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email ou senha inválidos");
         } catch (Exception e) {
-
-
-            log.error("Authentication failed for email {}", request.getEmail(), e);
+            log.error("Authentication failed for email {}: {}", request.getEmail(), e.getMessage());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Email ou senha inválidos");
         }
     }
@@ -90,17 +102,14 @@ public class AuthController {
         }
 
 
-        Company company = companyRepository.findById(request.getCompanyId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Empresa não encontrada"));
-
-
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 // Force default role to USER to prevent privilege escalation via client-supplied role
                 .role(Role.USER)
-                .company(company)
+                // No company association during public registration to prevent arbitrary linking
+                .company(null)
                 .phone(request.getPhone())
                 .cpf(request.getCpf())
                 .jobTitle(request.getJobTitle())
@@ -112,7 +121,8 @@ public class AuthController {
         user = userRepository.save(user);
         log.info("User {} registered successfully", user.getEmail());
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
+        // Use CustomUserDetails to avoid double load during immediate token generation
+        UserDetails userDetails = (UserDetails) userDetailsService.loadUserByUsername(user.getEmail());
         Tokens tokens = generateTokens(userDetails);
 
         LoginResponse response = buildLoginResponse(user, tokens);
@@ -126,21 +136,21 @@ public class AuthController {
 
             String refreshToken = request.getRefreshToken();
 
+            // check blocklist
+            if (blocklistService.isBlocked(refreshToken)) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token inválido");
+            }
 
             String userEmail = jwtUtil.extractUsername(refreshToken);
-
 
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 
             if (jwtUtil.validateToken(refreshToken, userDetails)) {
 
-
                 User user = userRepository.findByEmail(userEmail)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
 
-
                 Tokens tokens = generateTokens(userDetails);
-
 
                 LoginResponse response = buildLoginResponse(user, tokens);
 
@@ -153,20 +163,28 @@ public class AuthController {
             }
 
         } catch (Exception e) {
-
-
-            log.error("Token refresh failed", e);
+            log.error("Token refresh failed: {}", e.getMessage());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token inválido ou expirado");
         }
     }
 
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout() {
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
 
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            return ResponseEntity.noContent().build();
+        }
 
-        log.info("User logged out");
-
+        String jwt = authHeader.substring(7).trim();
+        try {
+            Instant expiry = jwtUtil.extractExpiration(jwt).toInstant();
+            blocklistService.blockToken(jwt, expiry);
+            log.info("Token blocked until {}", expiry);
+        } catch (Exception e) {
+            log.warn("Could not block token at logout: {}", e.getMessage());
+        }
 
         return ResponseEntity.noContent().build();
     }

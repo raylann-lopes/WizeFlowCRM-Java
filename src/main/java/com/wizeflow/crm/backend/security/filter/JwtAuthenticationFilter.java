@@ -1,7 +1,9 @@
 package com.wizeflow.crm.backend.security.filter;
 
+import com.wizeflow.crm.backend.security.service.CustomUserDetails;
 import com.wizeflow.crm.backend.security.service.CustomUserDetailsService;
 import com.wizeflow.crm.backend.security.service.JwtUtil;
+import com.wizeflow.crm.backend.security.service.TokenBlocklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,6 +30,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final CustomUserDetailsService userDetailsService;
 
+    private final TokenBlocklistService blocklistService;
+
 
     @Override
     protected void doFilterInternal(
@@ -38,46 +42,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
 
-
             String authHeader = request.getHeader("Authorization");
 
-
-
             if (authHeader == null || !authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
-
-
                 filterChain.doFilter(request, response);
                 return;
             }
 
-
-
-
             String jwt = authHeader.substring(7).trim();
-
 
             if (jwt.isEmpty()) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
-
+            // Check blocklist first
+            if (blocklistService.isBlocked(jwt)) {
+                log.warn("Blocked token attempted: {}", jwt.substring(Math.max(0, jwt.length()-10)));
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
 
             String userEmail = jwtUtil.extractUsername(jwt);
 
-
-
-
             if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
 
-
                 if (jwtUtil.validateToken(jwt, userDetails)) {
-
-
 
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
@@ -85,29 +77,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             userDetails.getAuthorities()
                     );
 
-
-
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-
-
 
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 
                     log.debug("User {} authenticated successfully", userEmail);
                 }
 
-
             }
 
         } catch (Exception e) {
 
-
-
             log.error("Cannot set user authentication: {}", e.getMessage());
         }
-
-
 
 
         filterChain.doFilter(request, response);
