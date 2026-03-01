@@ -1,9 +1,7 @@
 package com.wizeflow.crm.backend.security.filter;
 
-import com.wizeflow.crm.backend.security.service.CustomUserDetails;
 import com.wizeflow.crm.backend.security.service.CustomUserDetailsService;
 import com.wizeflow.crm.backend.security.service.JwtUtil;
-import com.wizeflow.crm.backend.security.service.TokenBlocklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,8 +28,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final CustomUserDetailsService userDetailsService;
 
-    private final TokenBlocklistService blocklistService;
-
 
     @Override
     protected void doFilterInternal(
@@ -53,13 +49,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (jwt.isEmpty()) {
                 filterChain.doFilter(request, response);
-                return;
-            }
-
-            // Check blocklist first
-            if (blocklistService.isBlocked(jwt)) {
-                log.warn("Blocked token attempted: {}", jwt.substring(Math.max(0, jwt.length()-10)));
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
 

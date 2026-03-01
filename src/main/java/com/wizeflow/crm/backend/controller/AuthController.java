@@ -9,7 +9,6 @@ import com.wizeflow.crm.backend.infrastructure.repository.UserRepository;
 import com.wizeflow.crm.backend.security.config.JwtProperties;
 import com.wizeflow.crm.backend.security.service.CustomUserDetails;
 import com.wizeflow.crm.backend.security.service.JwtUtil;
-import com.wizeflow.crm.backend.security.service.TokenBlocklistService;
 import com.wizeflow.crm.backend.enums.Role;
 import com.wizeflow.crm.backend.enums.UserStatus;
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,7 +40,6 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final JwtProperties jwtProperties;
     private final UserDetailsService userDetailsService;
-    private final TokenBlocklistService blocklistService;
 
 
     @PostMapping("/login")
@@ -142,8 +140,9 @@ public class AuthController {
 
             String refreshToken = request.getRefreshToken();
 
-            // check blocklist
-            if (blocklistService.isBlocked(refreshToken)) {
+            // Ensure token type is refresh
+            String typ = jwtUtil.extractTokenType(refreshToken);
+            if (typ == null || !typ.equalsIgnoreCase("refresh")) {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token inválido");
             }
 
@@ -180,20 +179,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request) {
 
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
-            return ResponseEntity.noContent().build();
-        }
-
-        String jwt = authHeader.substring(7).trim();
-        try {
-            Instant expiry = jwtUtil.extractExpiration(jwt).toInstant();
-            blocklistService.blockToken(jwt, expiry);
-            log.info("Token blocked until {}", expiry);
-        } catch (Exception e) {
-            log.warn("Could not block token at logout: {}", e.toString());
-        }
-
+        // logout no longer blocks tokens (blocklist removed)
         return ResponseEntity.noContent().build();
     }
 
