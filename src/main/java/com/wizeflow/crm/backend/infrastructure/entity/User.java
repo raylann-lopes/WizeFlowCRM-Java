@@ -73,7 +73,7 @@ public class User {
     private String department;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "companies_id", nullable = false)
+    @JoinColumn(name = "companies_id", nullable = true)
     private Company company;
 
 }
