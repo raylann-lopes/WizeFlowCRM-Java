@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+.gemini/
+gha-creds-*.json
+.github
+.ai
+AGENTS.md
+

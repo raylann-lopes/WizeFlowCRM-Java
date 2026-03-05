@@ -1,0 +1,61 @@
+package com.wizeflow.crm.backend.infrastructure.entity;
+
+import com.wizeflow.crm.backend.enums.ChatSessionChannel;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Table(name = "chat_sessions", indexes = {
+        @Index(name = "idx_chat_session_companies_id", columnList = "companies_id"),
+        @Index(name = "idx_chat_session_client_id", columnList = "client_id"),
+})
+@Entity
+public class ChatSession {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "companies_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Company company;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id")
+    private Client client;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "channel")
+    @Builder.Default
+    private ChatSessionChannel chatSessionChannel = ChatSessionChannel.WHATSAPP;
+
+    @CreationTimestamp
+    @Column(name = "created_at", columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private OffsetDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private OffsetDateTime updatedAt;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "chatSession", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Lead> leads = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "chatSession", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Appointment> appointments = new ArrayList<>();
+
+}
+
